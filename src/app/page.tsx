@@ -72,7 +72,7 @@ const products: Product[] = [
     status: "ok",
   },
   {
-    sku: "STARB-F0IL-HEAVY",
+    sku: "STARB-FOIL-HEAVY",
     name: "Starbuzz Heavy Duty Hookah Foil",
     category: "Foil",
     brand: "Starbuzz",
@@ -183,6 +183,8 @@ const products: Product[] = [
   },
 ];
 
+const PAGE_SIZE = 5;
+
 export default function Home() {
   const now = new Date();
   const formattedDate = now.toLocaleDateString("en-US", {
@@ -193,23 +195,42 @@ export default function Home() {
     hour: "2-digit",
     minute: "2-digit",
   });
-  const [activeCategory, setActiveCategory] = useState<string>("All");
 
-  const categories = ["All", "Charcoal", "Hookahs", "Bowls", "Flavours", "Accessories", "Foil"];
+  const [activeCategory, setActiveCategory] = useState<string>("All");
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const categories = [
+    "All",
+    "Charcoal",
+    "Hookahs",
+    "Bowls",
+    "Flavours",
+    "Accessories",
+    "Foil",
+  ];
 
   const filteredProducts =
     activeCategory === "All"
       ? products
-      : products.filter((product) => product.category === activeCategory);
+      : products.filter((p) => p.category === activeCategory);
+
+  const totalPages = Math.ceil(filteredProducts.length / PAGE_SIZE);
+  const pagedProducts = filteredProducts.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  );
 
   const totalSkus = filteredProducts.length;
-  const totalUnits = filteredProducts.reduce(
-    (sum, product) => sum + product.stock,
-    0
-  );
+  const totalUnits = filteredProducts.reduce((sum, p) => sum + p.stock, 0);
   const lowOrOut = filteredProducts.filter(
-    (product) => product.status === "low" || product.status === "out"
+    (p) => p.status === "low" || p.status === "out"
   ).length;
+
+  function handleCategoryChange(cat: string) {
+    setActiveCategory(cat);
+    setCurrentPage(1);
+  }
+
   return (
     <main className="min-h-screen bg-[#d7ff3f] px-2 py-4 text-sm text-zinc-100 md:px-6">
       <div className="mx-auto flex max-w-6xl gap-4 rounded-[32px] bg-[#050505] p-3 md:p-5">
@@ -220,13 +241,7 @@ export default function Home() {
             <div className="h-[1px] w-6 bg-zinc-700/60" />
             {[1, 2, 3, 4, 5].map((num) => {
               const href =
-                num === 1
-                  ? "/"
-                  : num === 2
-                  ? "/customers"
-                  : num === 3
-                  ? "/analytics"
-                  : "/";
+                num === 1 ? "/" : num === 2 ? "/customers" : num === 3 ? "/analytics" : "/";
               const isActive = num === 1;
               return (
                 <Link
@@ -258,20 +273,21 @@ export default function Home() {
                   Today, {formattedDate}
                 </p>
                 <h1 className="text-xl font-semibold text-zinc-50 md:text-2xl">
-                  Inventory management
+                  Inventory Management
                 </h1>
               </div>
-              <div className="flex flex-wrap gap-2 text-xs">
+              {/* Category filter tabs */}
+              <div className="flex flex-wrap justify-center gap-2 text-xs md:justify-end">
                 {categories.map((category) => {
                   const isActive = activeCategory === category;
                   return (
                     <button
                       key={category}
                       type="button"
-                      onClick={() => setActiveCategory(category)}
+                      onClick={() => handleCategoryChange(category)}
                       className={`rounded-full px-3 py-1.5 transition-colors ${
                         isActive
-                          ? "bg-[#d7ff3f] text-zinc-900"
+                          ? "bg-[#d7ff3f] text-zinc-900 font-semibold"
                           : "bg-zinc-900 text-zinc-400 shadow-[0_0_0_1px_rgba(255,255,255,0.04)] hover:text-zinc-200"
                       }`}
                     >
@@ -289,81 +305,144 @@ export default function Home() {
               <div>Category</div>
               <div>Brand</div>
               <div className="text-right">Location</div>
-              <div className="text-right">In stock</div>
+              <div className="text-right">In Stock</div>
               <div className="text-right">Price</div>
             </div>
 
             {/* Inventory list */}
             <div className="space-y-3 rounded-2xl bg-zinc-950/40 p-2 md:p-3">
+              {/* Stats row */}
               <div className="flex items-center justify-between px-2 text-[11px] text-zinc-500">
-                <span>{totalSkus} SKUs • {totalUnits} units in stock</span>
                 <span>
-                  {lowOrOut} low / out-of-stock items
+                  {totalSkus} SKUs &bull; {totalUnits} units in stock
                 </span>
+                <span>{lowOrOut} low / out-of-stock</span>
               </div>
+
+              {/* Product rows */}
               <div className="overflow-hidden rounded-2xl border border-zinc-900/80 bg-zinc-950/60">
-                {filteredProducts.map((product, index) => {
-                  const isLast = index === filteredProducts.length - 1;
-                  const statusColor =
-                    product.status === "ok"
-                      ? "bg-[#1f2619] text-[#d7ff3f]"
-                      : product.status === "low"
-                      ? "bg-[#332a14] text-[#facc15]"
-                      : "bg-[#3b1f1f] text-[#fb7185]";
-                  const available = product.stock - product.reserved;
-                  return (
-                    <div
-                      key={product.sku}
-                      className={[
-                        "grid grid-cols-1 gap-2 px-3 py-3 text-xs text-zinc-200 transition-colors md:grid-cols-[1.5fr_3fr_1.3fr_1.3fr_1.6fr_0.9fr_0.9fr] md:items-center",
-                        !isLast ? "border-b border-zinc-900/80" : "",
-                        "hover:bg-zinc-900/60",
-                      ]
-                        .filter(Boolean)
-                        .join(" ")}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="h-1.5 w-1.5 rounded-full bg-[#d7ff3f]" />
-                        <div>
-                          <p className="font-medium text-zinc-100">
-                            {product.sku}
-                          </p>
-                          <p className="text-[10px] text-zinc-500">
-                            {available > 0 ? "Available" : "Out of stock"}
-                          </p>
+                {pagedProducts.length === 0 ? (
+                  <div className="p-8 text-center text-xs text-zinc-500">
+                    No products in this category.
+                  </div>
+                ) : (
+                  pagedProducts.map((product, index) => {
+                    const isLast = index === pagedProducts.length - 1;
+                    const statusColor =
+                      product.status === "ok"
+                        ? "bg-[#1f2619] text-[#d7ff3f]"
+                        : product.status === "low"
+                        ? "bg-[#332a14] text-[#facc15]"
+                        : "bg-[#3b1f1f] text-[#fb7185]";
+                    const available = product.stock - product.reserved;
+                    return (
+                      <div
+                        key={product.sku}
+                        className={[
+                          "grid grid-cols-1 gap-2 px-3 py-3 text-xs text-zinc-200 transition-colors md:grid-cols-[1.5fr_3fr_1.3fr_1.3fr_1.6fr_0.9fr_0.9fr] md:items-center",
+                          !isLast ? "border-b border-zinc-900/80" : "",
+                          "hover:bg-zinc-900/60",
+                        ]
+                          .filter(Boolean)
+                          .join(" ")}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="h-1.5 w-1.5 rounded-full bg-[#d7ff3f]" />
+                          <div>
+                            <p className="font-medium text-zinc-100">
+                              {product.sku}
+                            </p>
+                            <p className="text-[10px] text-zinc-500">
+                              {available > 0 ? "Available" : "Out of stock"}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                      <div className="text-zinc-200">{product.name}</div>
-                      <p className="text-zinc-400">{product.category}</p>
-                      <p className="text-zinc-400">{product.brand}</p>
-                      <p className="text-right text-zinc-300 md:text-left">
-                        {product.location}
-                      </p>
-                      <div className="flex items-center justify-end gap-2">
-                        <span className="text-zinc-200">
-                          {product.stock}
-                          <span className="text-[10px] text-zinc-500">
-                            {" "}
-                            ({available} free)
+                        <div className="text-zinc-200">{product.name}</div>
+                        <p className="text-zinc-400">{product.category}</p>
+                        <p className="text-zinc-400">{product.brand}</p>
+                        <p className="text-right text-zinc-300 md:text-left">
+                          {product.location}
+                        </p>
+                        <div className="flex items-center justify-end gap-2">
+                          <span className="text-zinc-200">
+                            {product.stock}
+                            <span className="text-[10px] text-zinc-500">
+                              {" "}
+                              ({available} free)
+                            </span>
                           </span>
-                        </span>
-                        <span
-                          className={`rounded-full px-2 py-1 text-[10px] font-semibold ${statusColor}`}
-                        >
-                          {product.status === "ok"
-                            ? "OK"
-                            : product.status === "low"
-                            ? "Low"
-                            : "Out"}
-                        </span>
+                          <span
+                            className={`rounded-full px-2 py-1 text-[10px] font-semibold ${statusColor}`}
+                          >
+                            {product.status === "ok"
+                              ? "OK"
+                              : product.status === "low"
+                              ? "Low"
+                              : "Out"}
+                          </span>
+                        </div>
+                        <p className="text-right font-medium text-zinc-50">
+                          ${product.price.toFixed(2)}
+                        </p>
                       </div>
-                      <p className="text-right font-medium text-zinc-50">
-                        ${product.price.toFixed(2)}
-                      </p>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                )}
               </div>
+
+              {/* Pagination controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between px-2 pt-1">
+                  {/* Page number buttons */}
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: totalPages }).map((_, i) => {
+                      const page = i + 1;
+                      const isActive = page === currentPage;
+                      return (
+                        <button
+                          key={page}
+                          type="button"
+                          onClick={() => setCurrentPage(page)}
+                          className={`flex h-7 w-7 items-center justify-center rounded-lg text-[11px] font-medium transition-colors ${
+                            isActive
+                              ? "bg-[#d7ff3f] text-zinc-900"
+                              : "bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Prev / Next arrows */}
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={currentPage === 1}
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      className="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-900 text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-200 disabled:cursor-not-allowed disabled:opacity-30"
+                      aria-label="Previous page"
+                    >
+                      ‹
+                    </button>
+                    <span className="text-[11px] text-zinc-500">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={currentPage === totalPages}
+                      onClick={() =>
+                        setCurrentPage((p) => Math.min(totalPages, p + 1))
+                      }
+                      className="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-900 text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-200 disabled:cursor-not-allowed disabled:opacity-30"
+                      aria-label="Next page"
+                    >
+                      ›
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
