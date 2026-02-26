@@ -3,252 +3,147 @@
 import { useState } from "react";
 import Link from "next/link";
 
-type Product = {
-  sku: string;
+/* ─── Site definitions ─────────────────────────────────────────── */
+type SiteStatus = "live" | "preview" | "offline";
+
+type Site = {
+  id: string;
   name: string;
+  description: string;
+  url: string;
   category: string;
-  brand: string;
-  location: string;
-  stock: number;
-  reserved: number;
-  price: number;
-  status: "ok" | "low" | "out";
+  status: SiteStatus;
+  badge?: string;
+  lastDeployed: string;
+  pages?: string[];
 };
 
-const products: Product[] = [
+const sites: Site[] = [
   {
-    sku: "COCO-NARA-1KG",
-    name: "Coco Nara Coconut Charcoal 1kg",
-    category: "Charcoal",
-    brand: "Coco Nara",
-    location: "Charcoal Rack A1",
-    stock: 120,
-    reserved: 24,
-    price: 11.5,
-    status: "ok",
+    id: "bosshookah-main",
+    name: "Boss Hookah Wholesale",
+    description: "Main storefront — premium shisha, hookahs, vapes & accessories",
+    url: "https://bosshookah.site",
+    category: "Storefront",
+    status: "live",
+    badge: "Primary",
+    lastDeployed: "Active",
+    pages: ["Home", "Hookahs", "Shisha", "Charcoal", "Vapes", "Accessories", "Bundles", "Deals", "Wholesale"],
   },
   {
-    sku: "COCO-NARA-BOX-72",
-    name: "Coco Nara 27mm Cubes – 72pcs Box",
-    category: "Charcoal",
-    brand: "Coco Nara",
-    location: "Charcoal Rack A1",
-    stock: 64,
-    reserved: 40,
-    price: 9.25,
-    status: "low",
+    id: "bosshookah-v0",
+    name: "Boss Hookah Wholesale (v0)",
+    description: "v0-built wholesale site with featured collections & newsletter",
+    url: "https://v0-the-hookah-shop.vercel.app",
+    category: "Storefront",
+    status: "live",
+    badge: "v0",
+    lastDeployed: "Vercel",
+    pages: ["Home", "Products", "Hookahs", "Tobacco", "Accessories", "Vapes", "About", "Contact"],
   },
   {
-    sku: "AEON-VULCAN-BLK",
-    name: "AEON Phunnel Vulcan Bowl – Black",
-    category: "Bowls",
-    brand: "AEON",
-    location: "Wall B2",
-    stock: 32,
-    reserved: 6,
-    price: 39.0,
-    status: "ok",
+    id: "bosshookah-clone",
+    name: "5-Star Hookah Clone",
+    description: "Shopify-style clone site with full product catalogue",
+    url: "https://5star-hookah-clone-qtxw.vercel.app",
+    category: "Storefront",
+    status: "live",
+    lastDeployed: "Vercel",
+    pages: ["Home", "Hookahs", "Shisha", "Charcoal", "Vapes", "Accessories", "Bowls", "Bundles"],
   },
   {
-    sku: "KONG-GODZILLA",
-    name: "Kong Godzilla Hookah Bowl",
-    category: "Bowls",
-    brand: "Kong",
-    location: "Wall B3",
-    stock: 14,
-    reserved: 10,
-    price: 34.5,
-    status: "low",
+    id: "nextgen-fiber",
+    name: "NextGen Fiber",
+    description: "Customer & installation management portal for fiber services",
+    url: "https://nextgen-fiber.vercel.app",
+    category: "Admin Portal",
+    status: "live",
+    lastDeployed: "Vercel",
+    pages: ["Dashboard", "Customers", "Installations", "Notifications"],
   },
   {
-    sku: "AR0-FOIL-50",
-    name: "Aro Pre-Poked Hookah Foil – 50 Sheets",
-    category: "Foil",
-    brand: "Aro",
-    location: "Accessories C1",
-    stock: 210,
-    reserved: 60,
-    price: 6.5,
-    status: "ok",
+    id: "inventory",
+    name: "Inventory Dashboard",
+    description: "This dashboard — inventory, customers, analytics & order management",
+    url: "https://cursor-nextapp.vercel.app",
+    category: "Dashboard",
+    status: "live",
+    badge: "Here",
+    lastDeployed: "Vercel",
+    pages: ["Inventory", "Customers", "Analytics"],
   },
   {
-    sku: "STARB-FOIL-HEAVY",
-    name: "Starbuzz Heavy Duty Hookah Foil",
-    category: "Foil",
-    brand: "Starbuzz",
-    location: "Accessories C1",
-    stock: 40,
-    reserved: 30,
-    price: 7.75,
-    status: "low",
+    id: "davinci",
+    name: "Da Vinci Dynamics",
+    description: "AI-powered business website for Da Vinci Dynamics",
+    url: "https://v0-da-vinci-dynamics-website.vercel.app",
+    category: "Business Site",
+    status: "live",
+    lastDeployed: "Vercel",
+    pages: ["Home", "Services", "About", "Contact"],
   },
   {
-    sku: "SMOKE-ISLAND-DA-250",
-    name: "Smoke Island Shisha 250g – Double Apple",
-    category: "Flavours",
-    brand: "Smoke Island",
-    location: "Flavours D1",
-    stock: 95,
-    reserved: 12,
-    price: 13.9,
-    status: "ok",
-  },
-  {
-    sku: "SMOKE-ISLAND-MINT-ICE",
-    name: "Smoke Island Shisha 250g – Mint Ice",
-    category: "Flavours",
-    brand: "Smoke Island",
-    location: "Flavours D1",
-    stock: 18,
-    reserved: 10,
-    price: 13.9,
-    status: "low",
-  },
-  {
-    sku: "SMOKE-ISLAND-GRAPE-ICE",
-    name: "Smoke Island Shisha 250g – Grape Ice",
-    category: "Flavours",
-    brand: "Smoke Island",
-    location: "Flavours D2",
-    stock: 0,
-    reserved: 8,
-    price: 13.9,
-    status: "out",
-  },
-  {
-    sku: "MOB-CLOUDKING-2KG",
-    name: "MOB Cloud King Coconut Charcoal 2kg",
-    category: "Charcoal",
-    brand: "MOB",
-    location: "Charcoal Rack A2",
-    stock: 44,
-    reserved: 6,
-    price: 19.9,
-    status: "ok",
-  },
-  {
-    sku: "AURA-HOOKAH-COMPLETE",
-    name: "Aura Premium Hookah – Complete Set",
-    category: "Hookahs",
-    brand: "Aura",
-    location: "Showroom E1",
-    stock: 8,
-    reserved: 4,
-    price: 229.0,
-    status: "ok",
-  },
-  {
-    sku: "BLADE-HOOKAH-X",
-    name: "Blade Hookah X Series",
-    category: "Hookahs",
-    brand: "Blade",
-    location: "Showroom E2",
-    stock: 5,
-    reserved: 4,
-    price: 259.0,
-    status: "low",
-  },
-  {
-    sku: "VYRO-ONE-STEEL",
-    name: "VYRO One Stainless Steel Hookah",
-    category: "Hookahs",
-    brand: "VYRO",
-    location: "Showroom E3",
-    stock: 3,
-    reserved: 3,
-    price: 199.0,
-    status: "out",
-  },
-  {
-    sku: "UNION-HOOKAH-COLOR",
-    name: "Union Hookah – Color Edition",
-    category: "Hookahs",
-    brand: "Union",
-    location: "Showroom E4",
-    stock: 6,
-    reserved: 1,
-    price: 279.0,
-    status: "ok",
-  },
-  {
-    sku: "LED-RING-LIGHT",
-    name: "Hookah LED Ring Light",
-    category: "Accessories",
-    brand: "Boss",
-    location: "Accessories C3",
-    stock: 52,
-    reserved: 9,
-    price: 14.5,
-    status: "ok",
+    id: "magic-portfolio",
+    name: "Magic Portfolio",
+    description: "Personal portfolio site",
+    url: "https://magic-portfolio-puce.vercel.app",
+    category: "Portfolio",
+    status: "live",
+    lastDeployed: "Vercel",
+    pages: ["Home", "Work", "About"],
   },
 ];
 
-const PAGE_SIZE = 5;
+const categories = ["All", "Storefront", "Dashboard", "Admin Portal", "Business Site", "Portfolio"];
+
+const statusColors: Record<SiteStatus, string> = {
+  live: "bg-[#1f2619] text-[#d7ff3f]",
+  preview: "bg-[#1c1c2e] text-[#818cf8]",
+  offline: "bg-[#3b1f1f] text-[#fb7185]",
+};
+
+const statusDot: Record<SiteStatus, string> = {
+  live: "bg-[#d7ff3f]",
+  preview: "bg-[#818cf8]",
+  offline: "bg-[#fb7185]",
+};
 
 export default function Home() {
   const now = new Date();
-  const formattedDate = now.toLocaleDateString("en-US", {
-    day: "2-digit",
-    month: "short",
-  });
-  const formattedTime = now.toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const formattedDate = now.toLocaleDateString("en-US", { day: "2-digit", month: "short" });
+  const formattedTime = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
 
-  const [activeCategory, setActiveCategory] = useState<string>("All");
-  const [currentPage, setCurrentPage] = useState(1);
+  const [activeCategory, setActiveCategory] = useState("All");
+  const [expandedSite, setExpandedSite] = useState<string | null>(null);
 
-  const categories = [
-    "All",
-    "Charcoal",
-    "Hookahs",
-    "Bowls",
-    "Flavours",
-    "Accessories",
-    "Foil",
-  ];
+  const filtered =
+    activeCategory === "All" ? sites : sites.filter((s) => s.category === activeCategory);
 
-  const filteredProducts =
-    activeCategory === "All"
-      ? products
-      : products.filter((p) => p.category === activeCategory);
-
-  const totalPages = Math.ceil(filteredProducts.length / PAGE_SIZE);
-  const pagedProducts = filteredProducts.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE
-  );
-
-  const totalSkus = filteredProducts.length;
-  const totalUnits = filteredProducts.reduce((sum, p) => sum + p.stock, 0);
-  const lowOrOut = filteredProducts.filter(
-    (p) => p.status === "low" || p.status === "out"
-  ).length;
-
-  function handleCategoryChange(cat: string) {
-    setActiveCategory(cat);
-    setCurrentPage(1);
-  }
+  const liveSites = sites.filter((s) => s.status === "live").length;
+  const totalPages = sites.reduce((sum, s) => sum + (s.pages?.length ?? 0), 0);
 
   return (
     <main className="min-h-screen bg-[#d7ff3f] px-2 py-4 text-sm text-zinc-100 md:px-6">
       <div className="mx-auto flex max-w-6xl gap-4 rounded-[32px] bg-[#050505] p-3 md:p-5">
+
         {/* Left sidebar */}
         <aside className="flex w-12 flex-col items-center justify-between rounded-2xl bg-[#0b0b0b] py-4 md:w-14">
           <div className="flex flex-col items-center gap-4">
             <div className="h-8 w-8 rounded-2xl bg-[#d7ff3f]" />
             <div className="h-[1px] w-6 bg-zinc-700/60" />
-            {[1, 2, 3, 4, 5].map((num) => {
-              const href =
-                num === 1 ? "/" : num === 2 ? "/customers" : num === 3 ? "/analytics" : "/";
+            {[
+              { num: 1, href: "/", label: "Hub" },
+              { num: 2, href: "/customers", label: "CRM" },
+              { num: 3, href: "/analytics", label: "Stats" },
+            ].map(({ num, href, label }) => {
               const isActive = num === 1;
               return (
                 <Link
                   key={num}
                   href={href}
+                  title={label}
                   className={`flex h-8 w-8 items-center justify-center rounded-xl border border-zinc-700/60 text-[10px] text-zinc-400 hover:border-[#d7ff3f] hover:text-[#d7ff3f] ${
-                    isActive ? "bg-zinc-900/80" : ""
+                    isActive ? "border-[#d7ff3f] bg-zinc-900/80 text-[#d7ff3f]" : ""
                   }`}
                 >
                   {num}
@@ -262,10 +157,10 @@ export default function Home() {
           </div>
         </aside>
 
-        {/* Main content + right column */}
+        {/* Main content */}
         <section className="flex flex-1 flex-col gap-4 md:flex-row">
-          {/* Center content */}
           <div className="flex-1 space-y-4">
+
             {/* Header */}
             <header className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
               <div>
@@ -273,307 +168,261 @@ export default function Home() {
                   Today, {formattedDate}
                 </p>
                 <h1 className="text-xl font-semibold text-zinc-50 md:text-2xl">
-                  Inventory Management
+                  Site Hub
                 </h1>
+                <p className="mt-0.5 text-xs text-zinc-500">
+                  All your Boss Hookah properties in one place
+                </p>
               </div>
-              {/* Category filter tabs */}
+              {/* Category filters */}
               <div className="flex flex-wrap justify-center gap-2 text-xs md:justify-end">
-                {categories.map((category) => {
-                  const isActive = activeCategory === category;
+                {categories.map((cat) => {
+                  const isActive = activeCategory === cat;
                   return (
                     <button
-                      key={category}
+                      key={cat}
                       type="button"
-                      onClick={() => handleCategoryChange(category)}
+                      onClick={() => setActiveCategory(cat)}
                       className={`rounded-full px-3 py-1.5 transition-colors ${
                         isActive
-                          ? "bg-[#d7ff3f] text-zinc-900 font-semibold"
+                          ? "bg-[#d7ff3f] font-semibold text-zinc-900"
                           : "bg-zinc-900 text-zinc-400 shadow-[0_0_0_1px_rgba(255,255,255,0.04)] hover:text-zinc-200"
                       }`}
                     >
-                      {category}
+                      {cat}
                     </button>
                   );
                 })}
               </div>
             </header>
 
-            {/* Table header */}
-            <div className="hidden grid-cols-[1.5fr_3fr_1.3fr_1.3fr_1.6fr_0.9fr_0.9fr] items-center rounded-2xl bg-zinc-900/70 px-4 py-3 text-[11px] text-zinc-500 md:grid">
-              <div>SKU</div>
-              <div>Product</div>
-              <div>Category</div>
-              <div>Brand</div>
-              <div className="text-right">Location</div>
-              <div className="text-right">In Stock</div>
-              <div className="text-right">Price</div>
-            </div>
+            {/* Site cards grid */}
+            <div className="space-y-2">
+              {filtered.map((site) => {
+                const isExpanded = expandedSite === site.id;
+                return (
+                  <div
+                    key={site.id}
+                    className="overflow-hidden rounded-2xl border border-zinc-900/80 bg-zinc-950/60 transition-all"
+                  >
+                    {/* Card header row */}
+                    <div
+                      className="flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-zinc-900/40"
+                      onClick={() =>
+                        setExpandedSite(isExpanded ? null : site.id)
+                      }
+                    >
+                      {/* Status dot */}
+                      <span
+                        className={`h-2 w-2 flex-shrink-0 rounded-full ${statusDot[site.status]}`}
+                      />
 
-            {/* Inventory list */}
-            <div className="space-y-3 rounded-2xl bg-zinc-950/40 p-2 md:p-3">
-              {/* Stats row */}
-              <div className="flex items-center justify-between px-2 text-[11px] text-zinc-500">
-                <span>
-                  {totalSkus} SKUs &bull; {totalUnits} units in stock
-                </span>
-                <span>{lowOrOut} low / out-of-stock</span>
-              </div>
-
-              {/* Product rows */}
-              <div className="overflow-hidden rounded-2xl border border-zinc-900/80 bg-zinc-950/60">
-                {pagedProducts.length === 0 ? (
-                  <div className="p-8 text-center text-xs text-zinc-500">
-                    No products in this category.
-                  </div>
-                ) : (
-                  pagedProducts.map((product, index) => {
-                    const isLast = index === pagedProducts.length - 1;
-                    const statusColor =
-                      product.status === "ok"
-                        ? "bg-[#1f2619] text-[#d7ff3f]"
-                        : product.status === "low"
-                        ? "bg-[#332a14] text-[#facc15]"
-                        : "bg-[#3b1f1f] text-[#fb7185]";
-                    const available = product.stock - product.reserved;
-                    return (
-                      <div
-                        key={product.sku}
-                        className={[
-                          "grid grid-cols-1 gap-2 px-3 py-3 text-xs text-zinc-200 transition-colors md:grid-cols-[1.5fr_3fr_1.3fr_1.3fr_1.6fr_0.9fr_0.9fr] md:items-center",
-                          !isLast ? "border-b border-zinc-900/80" : "",
-                          "hover:bg-zinc-900/60",
-                        ]
-                          .filter(Boolean)
-                          .join(" ")}
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="h-1.5 w-1.5 rounded-full bg-[#d7ff3f]" />
-                          <div>
-                            <p className="font-medium text-zinc-100">
-                              {product.sku}
-                            </p>
-                            <p className="text-[10px] text-zinc-500">
-                              {available > 0 ? "Available" : "Out of stock"}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="text-zinc-200">{product.name}</div>
-                        <p className="text-zinc-400">{product.category}</p>
-                        <p className="text-zinc-400">{product.brand}</p>
-                        <p className="text-right text-zinc-300 md:text-left">
-                          {product.location}
-                        </p>
-                        <div className="flex items-center justify-end gap-2">
-                          <span className="text-zinc-200">
-                            {product.stock}
-                            <span className="text-[10px] text-zinc-500">
-                              {" "}
-                              ({available} free)
+                      {/* Name + description */}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-medium text-zinc-100">{site.name}</p>
+                          {site.badge && (
+                            <span className="rounded-full bg-[#1c2711] px-2 py-0.5 text-[10px] font-semibold text-[#d7ff3f]">
+                              {site.badge}
                             </span>
-                          </span>
-                          <span
-                            className={`rounded-full px-2 py-1 text-[10px] font-semibold ${statusColor}`}
-                          >
-                            {product.status === "ok"
-                              ? "OK"
-                              : product.status === "low"
-                              ? "Low"
-                              : "Out"}
+                          )}
+                          <span className="rounded-full bg-zinc-900 px-2 py-0.5 text-[10px] text-zinc-500">
+                            {site.category}
                           </span>
                         </div>
-                        <p className="text-right font-medium text-zinc-50">
-                          ${product.price.toFixed(2)}
+                        <p className="mt-0.5 truncate text-[11px] text-zinc-500">
+                          {site.description}
                         </p>
                       </div>
-                    );
-                  })
-                )}
-              </div>
 
-              {/* Pagination controls */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between px-2 pt-1">
-                  {/* Page number buttons */}
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: totalPages }).map((_, i) => {
-                      const page = i + 1;
-                      const isActive = page === currentPage;
-                      return (
-                        <button
-                          key={page}
-                          type="button"
-                          onClick={() => setCurrentPage(page)}
-                          className={`flex h-7 w-7 items-center justify-center rounded-lg text-[11px] font-medium transition-colors ${
-                            isActive
-                              ? "bg-[#d7ff3f] text-zinc-900"
-                              : "bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
-                          }`}
-                        >
-                          {page}
-                        </button>
-                      );
-                    })}
-                  </div>
+                      {/* Status badge */}
+                      <span
+                        className={`hidden flex-shrink-0 rounded-full px-2 py-1 text-[10px] font-semibold md:inline-flex ${statusColors[site.status]}`}
+                      >
+                        {site.status === "live"
+                          ? "Live"
+                          : site.status === "preview"
+                          ? "Preview"
+                          : "Offline"}
+                      </span>
 
-                  {/* Prev / Next arrows */}
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      disabled={currentPage === 1}
-                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                      className="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-900 text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-200 disabled:cursor-not-allowed disabled:opacity-30"
-                      aria-label="Previous page"
-                    >
-                      ‹
-                    </button>
-                    <span className="text-[11px] text-zinc-500">
-                      Page {currentPage} of {totalPages}
-                    </span>
-                    <button
-                      type="button"
-                      disabled={currentPage === totalPages}
-                      onClick={() =>
-                        setCurrentPage((p) => Math.min(totalPages, p + 1))
-                      }
-                      className="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-900 text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-200 disabled:cursor-not-allowed disabled:opacity-30"
-                      aria-label="Next page"
-                    >
-                      ›
-                    </button>
+                      {/* Open link */}
+                      <a
+                        href={site.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="flex-shrink-0 rounded-full bg-zinc-900 px-3 py-1.5 text-[11px] text-zinc-300 transition-colors hover:bg-[#d7ff3f] hover:text-zinc-900"
+                      >
+                        Open ↗
+                      </a>
+
+                      {/* Expand chevron */}
+                      <span
+                        className={`flex-shrink-0 text-zinc-600 transition-transform ${
+                          isExpanded ? "rotate-180" : ""
+                        }`}
+                      >
+                        ▾
+                      </span>
+                    </div>
+
+                    {/* Expanded detail panel */}
+                    {isExpanded && (
+                      <div className="border-t border-zinc-900/80 bg-zinc-950/80 px-4 py-3">
+                        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                          {/* URL */}
+                          <div>
+                            <p className="text-[10px] uppercase tracking-[0.16em] text-zinc-600">
+                              URL
+                            </p>
+                            <a
+                              href={site.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-[#d7ff3f] hover:underline"
+                            >
+                              {site.url}
+                            </a>
+                          </div>
+                          {/* Deployed via */}
+                          <div>
+                            <p className="text-[10px] uppercase tracking-[0.16em] text-zinc-600">
+                              Hosted via
+                            </p>
+                            <p className="text-xs text-zinc-300">{site.lastDeployed}</p>
+                          </div>
+                          {/* Status */}
+                          <div>
+                            <p className="text-[10px] uppercase tracking-[0.16em] text-zinc-600">
+                              Status
+                            </p>
+                            <p className="text-xs text-zinc-300 capitalize">{site.status}</p>
+                          </div>
+                        </div>
+
+                        {/* Pages list */}
+                        {site.pages && site.pages.length > 0 && (
+                          <div className="mt-3">
+                            <p className="mb-2 text-[10px] uppercase tracking-[0.16em] text-zinc-600">
+                              Pages
+                            </p>
+                            <div className="flex flex-wrap gap-1.5">
+                              {site.pages.map((page) => (
+                                <span
+                                  key={page}
+                                  className="rounded-lg bg-zinc-900 px-2.5 py-1 text-[11px] text-zinc-400"
+                                >
+                                  {page}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
-                </div>
-              )}
+                );
+              })}
             </div>
           </div>
 
-          {/* Right column */}
+          {/* Right sidebar */}
           <aside className="flex w-full flex-col gap-3 md:w-72">
-            {/* Selected route */}
+
+            {/* Overview card */}
             <div className="space-y-3 rounded-2xl bg-gradient-to-br from-[#14111c] via-[#050408] to-black p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">
-                    Selected route
+                    Network overview
                   </p>
-                  <p className="text-xs text-zinc-400">
-                    {lowOrOut} items need attention
-                  </p>
+                  <p className="text-xs text-zinc-400">Boss Hookah properties</p>
                 </div>
                 <div className="rounded-full bg-[#1b1b1f] px-3 py-1 text-[11px] text-zinc-300">
                   {formattedTime}
                 </div>
               </div>
-              <div className="space-y-2 rounded-xl bg-zinc-950/70 p-3 text-xs">
-                <div className="flex items-center justify-between text-zinc-300">
-                  <div>
-                    <p className="text-[10px] uppercase tracking-[0.16em] text-zinc-500">
-                      Time
-                    </p>
-                    <p>{formattedTime}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-[10px] uppercase tracking-[0.16em] text-zinc-500">
-                      Distance
-                    </p>
-                    <p>{totalSkus} SKUs</p>
-                  </div>
-                </div>
-                <div className="mt-2 space-y-2 rounded-lg bg-zinc-900/60 p-2">
-                  <div className="flex items-center justify-between text-[11px] text-zinc-200">
-                    <div>
-                      <p className="font-medium">Main warehouse</p>
-                      <p className="text-[10px] text-zinc-500">
-                        Live inventory snapshot
-                      </p>
-                    </div>
-                    <div className="text-right text-[10px] text-zinc-400">
-                      <p>In stock: {totalUnits}</p>
-                      <p>Low / out: {lowOrOut}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between text-[11px] text-zinc-200">
-                    <div>
-                      <p className="font-medium">Next replenishment</p>
-                      <p className="text-[10px] text-zinc-500">
-                        Configure supplier feed
-                      </p>
-                    </div>
-                    <div className="text-right text-[10px] text-zinc-400">
-                      <p>Auto-order: off</p>
-                      <p>Threshold: 10 units</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="flex gap-2 text-xs">
-                <button className="flex-1 rounded-full bg-zinc-900 px-3 py-1.5 text-zinc-100">
-                  Save
-                </button>
-                <button className="flex-1 rounded-full bg-[#d7ff3f] px-3 py-1.5 text-zinc-900">
-                  All Recommendations
-                </button>
-              </div>
-            </div>
-
-            {/* Revenue card */}
-            <div className="space-y-3 rounded-2xl bg-zinc-950/80 p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">
-                    Revenue
+              <div className="grid grid-cols-2 gap-2">
+                <div className="rounded-xl bg-zinc-950/70 p-3 text-center">
+                  <p className="text-2xl font-bold text-[#d7ff3f]">{sites.length}</p>
+                  <p className="text-[10px] uppercase tracking-[0.14em] text-zinc-500">
+                    Total Sites
                   </p>
-                  <p className="text-xs text-zinc-400">1 h 32 m</p>
                 </div>
-                <div className="flex items-center gap-1 rounded-full bg-[#1c2711] px-2 py-1 text-[10px] font-medium text-[#d7ff3f]">
-                  <span>↑ 2.6%</span>
+                <div className="rounded-xl bg-zinc-950/70 p-3 text-center">
+                  <p className="text-2xl font-bold text-[#d7ff3f]">{liveSites}</p>
+                  <p className="text-[10px] uppercase tracking-[0.14em] text-zinc-500">
+                    Live
+                  </p>
                 </div>
-              </div>
-              <div className="mt-1 h-20 rounded-xl bg-gradient-to-t from-[#151515] to-[#111827] px-2 pt-3">
-                <div className="flex h-full items-end justify-between gap-1">
-                  {Array.from({ length: 12 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="flex-1 rounded-full bg-[#1f2937]"
-                      style={{ height: `${20 + (i % 5) * 12}%` }}
-                    />
-                  ))}
-                  <div className="flex-1 rounded-full bg-[#d7ff3f]" />
+                <div className="rounded-xl bg-zinc-950/70 p-3 text-center">
+                  <p className="text-2xl font-bold text-zinc-100">{totalPages}</p>
+                  <p className="text-[10px] uppercase tracking-[0.14em] text-zinc-500">
+                    Total Pages
+                  </p>
+                </div>
+                <div className="rounded-xl bg-zinc-950/70 p-3 text-center">
+                  <p className="text-2xl font-bold text-zinc-100">
+                    {categories.length - 1}
+                  </p>
+                  <p className="text-[10px] uppercase tracking-[0.14em] text-zinc-500">
+                    Categories
+                  </p>
                 </div>
               </div>
             </div>
 
-            {/* Weight / Volume */}
-            <div className="flex gap-3">
-              <div className="flex-1 space-y-2 rounded-2xl bg-zinc-950/80 p-4">
-                <p className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">
-                  Weight
-                </p>
-                <div className="relative flex items-center justify-center">
-                  <div className="h-20 w-20 rounded-full border-4 border-zinc-800" />
-                  <div className="absolute h-20 w-20 rounded-full border-4 border-[#d7ff3f] border-t-transparent border-l-transparent rotate-45" />
-                  <div className="absolute text-center text-xs">
-                    <p className="text-lg font-semibold text-zinc-50">542 t</p>
-                    <p className="text-[10px] text-zinc-500">/ 681 t</p>
-                  </div>
-                </div>
-              </div>
-              <div className="flex-1 space-y-2 rounded-2xl bg-zinc-950/80 p-4">
-                <p className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">
-                  Vol
-                </p>
-                <div className="flex h-20 flex-col items-start justify-between">
-                  <div className="rounded-full bg-[#111827] px-3 py-1 text-xs text-zinc-300">
-                    2.1 gb
-                  </div>
-                  <div className="flex items-center gap-2 text-[11px] text-zinc-500">
-                    <span className="inline-flex h-3 w-3 items-center justify-center rounded-full border border-[#d7ff3f]">
-                      <span className="h-1.5 w-1.5 rounded-full bg-[#d7ff3f]" />
-                    </span>
-                    <span>Optimal volume load</span>
-                  </div>
-                </div>
-              </div>
+            {/* Quick links card */}
+            <div className="space-y-2 rounded-2xl bg-zinc-950/80 p-4">
+              <p className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">
+                Quick launch
+              </p>
+              {sites
+                .filter((s) => s.status === "live")
+                .slice(0, 5)
+                .map((site) => (
+                  <a
+                    key={site.id}
+                    href={site.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between rounded-xl bg-zinc-900/60 px-3 py-2 text-xs transition-colors hover:bg-zinc-800/80"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#d7ff3f]" />
+                      <span className="truncate text-zinc-200">{site.name}</span>
+                    </div>
+                    <span className="flex-shrink-0 text-zinc-600">↗</span>
+                  </a>
+                ))}
             </div>
+
+            {/* Internal nav card */}
+            <div className="space-y-2 rounded-2xl bg-zinc-950/80 p-4">
+              <p className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">
+                Dashboard pages
+              </p>
+              {[
+                { href: "/", label: "Site Hub", active: true },
+                { href: "/customers", label: "Customers & Orders", active: false },
+                { href: "/analytics", label: "Analytics", active: false },
+              ].map(({ href, label, active }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  className={`flex items-center justify-between rounded-xl px-3 py-2 text-xs transition-colors ${
+                    active
+                      ? "bg-[#1c2711] text-[#d7ff3f]"
+                      : "bg-zinc-900/60 text-zinc-400 hover:bg-zinc-800/80 hover:text-zinc-200"
+                  }`}
+                >
+                  <span>{label}</span>
+                  {active && <span className="text-[10px]">●</span>}
+                </Link>
+              ))}
+            </div>
+
           </aside>
         </section>
       </div>
